@@ -1,0 +1,1002 @@
+---
+/**
+ * Haotai Huang · personal academic homepage
+ * Put this file at: src/pages/index.astro
+ *
+ * Design goals
+ * - Academic first: readable, calm, long-lived.
+ * - Personal second: small portrait, name, email, education, and your own research voice.
+ * - Minecraft-inspired, not Minecraft-themed: original CSS voxels / terrain / day-night details.
+ * - No framework dependencies beyond Astro; no SVG; no external font files.
+ *
+ * Maintenance
+ * - Update profile / education / works / notes below.
+ * - Put your portrait at public/avatar.jpg and set profile.avatar = "avatar.jpg".
+ * - The three Selected Work entries below are starter content. Replace them with your real research/projects when ready.
+ * - An empty notes array still hides Notes automatically.
+ */
+
+type Link = { label: string; href: string };
+type Work = {
+  kicker?: string;
+  title: string;
+  description: string;
+  year?: string;
+  authors?: string;
+  venue?: string;
+  status?: string;
+  visual?: "memory" | "progress" | "systems";
+  image?: string;
+  imageAlt?: string;
+  tags?: string[];
+  links?: Link[];
+};
+type Note = {
+  title: string;
+  date: string; // YYYY-MM-DD
+  href: string;
+  category?: string;
+};
+
+const profile = {
+  name: "Haotai Huang",
+  initials: "HH",
+  email: "51295902036@stu.ecnu.edu.cn",
+  github: "https://github.com/hhaotai",
+  cv: "", // e.g. "cv.pdf" after putting it in public/cv.pdf
+  scholar: "", // full Google Scholar URL
+  avatar: "", // e.g. "avatar.jpg"
+  avatarPosition: "50% 50%",
+  lead: "I’m interested in how AI agents learn from experience—and how to make that learning reliable.",
+  bio: "My work centers on learning agents, memory, and reliable AI systems. I want to understand how an agent turns interaction into reusable knowledge, notices when that knowledge is wrong, and carries useful behavior to unfamiliar tasks.",
+  aim: "I care about progress we can inspect: what changed, why it changed, and when it stops working.",
+  siteNote: "This site is where I keep my research, projects, and notes.",
+};
+
+const education = [
+  {
+    institution: "East China Normal University",
+    detail: "Software Engineering",
+    period: "2026 — Present",
+  },
+  {
+    institution: "Huaqiao University",
+    detail: "Computer Science and Technology",
+    period: "2022 — 2026",
+  },
+];
+
+// Research is organized by concrete work rather than broad interest labels.
+// These three entries are intentionally easy to replace: edit title / description / status / tags / links.
+// When you have real figures, set image: "your-image.png" (file under public/) and the CSS artwork is replaced automatically.
+const works: Work[] = [
+  {
+    kicker: "Agent learning · Memory",
+    title: "Learning from Experience",
+    description:
+      "Exploring how an agent can turn interaction into reusable knowledge without quietly preserving its own mistakes. The central question is not only what to remember, but when to revise or forget it.",
+    year: "2026",
+    status: "Research exploration",
+    visual: "memory",
+    tags: ["Agent learning", "Memory", "Self-improvement"],
+    links: [],
+  },
+  {
+    kicker: "Evaluation · Generalization",
+    title: "Measuring Real Progress",
+    description:
+      "Studying whether an apparent improvement survives unfamiliar tasks, stronger baselines, and changing requirements. The goal is to separate genuine capability gains from benchmark-shaped progress.",
+    year: "2026",
+    status: "Evaluation study",
+    visual: "progress",
+    tags: ["Evaluation", "Generalization", "LLM agents"],
+    links: [],
+  },
+  {
+    kicker: "Verification · Systems",
+    title: "Reliable Agent Systems",
+    description:
+      "Building toward agent workflows that make requirements explicit, behavior traceable, and failures easier to inspect. I am interested in how software engineering and verification can turn capable models into dependable systems.",
+    year: "2026",
+    status: "Systems project",
+    visual: "systems",
+    tags: ["Verification", "Agent systems", "Software engineering"],
+    links: [],
+  },
+];
+const notes: Note[] = [];
+
+const base = import.meta.env.BASE_URL;
+function asset(path: string): string {
+  if (!path) return "";
+  const clean = path.trim();
+  if (/^(https?:\/\/|mailto:|tel:|#)/i.test(clean)) return clean;
+  if (/^[a-z][a-z\d+.-]*:/i.test(clean) || clean.startsWith("//")) return "";
+  return `${base.replace(/\/$/, "")}/${clean.replace(/^\/+/, "")}`;
+}
+const isExternal = (href: string): boolean => /^https?:\/\//i.test(href);
+
+const profileLinks: Link[] = [
+  ...(profile.github ? [{ label: "GitHub", href: profile.github }] : []),
+  ...(profile.cv ? [{ label: "CV", href: profile.cv }] : []),
+  ...(profile.scholar ? [{ label: "Scholar", href: profile.scholar }] : []),
+].filter((item) => asset(item.href));
+
+const nav = [
+  { label: "About", href: "#about" },
+  ...(works.length ? [{ label: "Work", href: "#work" }] : []),
+  ...(notes.length ? [{ label: "Notes", href: "#notes" }] : []),
+  ...(profile.github ? [{ label: "GitHub", href: profile.github }] : []),
+];
+
+const emailParts = profile.email.split("@");
+const year = new Date().getFullYear();
+const description = "Haotai Huang — learning agents, reliable AI systems, research and projects.";
+
+// Original pixel landscape data. CSS colors are theme-aware.
+const ground = [
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "..............................gggg..............",
+  ".......................ggggggGGGGGgg............",
+  ".................gggggGGGGGGddddGGGGgggg........",
+  ".........gggggggGGGGddddddddddddddGGGGGGgg......",
+  "...gggggGGGGGGdddddddddtddddddddddddGGGGGGggg..",
+  "ggGGGGGdddddtddddddddddddddddtddddddddddGGGGGGg",
+  "GGGdddddddddddddddssssddddddddddddddtdddddddGGGG",
+  "ddddddddtddddddsssssssdddddddtdddddddddddddddddd",
+  "..dddddddddddssssssssddd...ddddddddtddddddddddd.",
+  ".....dddddddsssssssddd.........dddddddddddddd....",
+  ".........dddsssssddd...............dddddddd......",
+  "............sssss......................ddd.......",
+];
+const toneMap: Record<string, string> = {
+  g: "--grass-hi",
+  G: "--grass",
+  d: "--dirt",
+  t: "--dirt-deep",
+  s: "--stone",
+};
+const groundPixels = ground.flatMap((row, y) =>
+  Array.from(row).flatMap((cell, x) =>
+    toneMap[cell] ? [{ x, y, tone: toneMap[cell] }] : []
+  )
+);
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content={profile.name} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f4f0e8" id="theme-color" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${profile.name} · Personal homepage`} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" href="data:," />
+    <title>{profile.name} · Research & Projects</title>
+    <script is:inline>
+      (() => {
+        let theme = "light";
+        try {
+          if (localStorage.getItem("haotai-theme") === "dark") theme = "dark";
+        } catch (_) {}
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+
+  <body id="top">
+    <!-- Ambient voxel world: purely decorative, intentionally faint. -->
+    <div class="world" aria-hidden="true">
+      <i class="pixel-sun"></i>
+      <i class="star star-a"></i>
+      <i class="star star-b"></i>
+      <i class="star star-c"></i>
+      <i class="cloud cloud-a"></i>
+      <i class="cloud cloud-b"></i>
+      <i class="cloud cloud-c"></i>
+      <i class="floating-block grass-cube"></i>
+      <i class="floating-block stone-cube"></i>
+      <i class="world-ridge"></i>
+    </div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="shell">
+      <header class="site-header">
+        <a class="brand" href="#top" aria-label={`${profile.name}, home`}>
+          <span class="brand-cube" aria-hidden="true"><i></i></span>
+          <span class="brand-text">HH<span>.</span></span>
+        </a>
+
+        <div class="header-right">
+          <nav aria-label="Main navigation">
+            {nav.map((item) => (
+              <a
+                href={asset(item.href)}
+                target={isExternal(item.href) ? "_blank" : undefined}
+                rel={isExternal(item.href) ? "noopener noreferrer" : undefined}
+              >{item.label}</a>
+            ))}
+          </nav>
+          <button
+            class="theme-toggle"
+            id="theme-toggle"
+            type="button"
+            aria-label="Switch to dark theme"
+            aria-pressed="false"
+            hidden
+          >
+            <span class="theme-pixel" aria-hidden="true"></span>
+            <span class="theme-word" aria-hidden="true">Day</span>
+          </button>
+        </div>
+      </header>
+
+      <main id="main">
+        <section class="hero" id="about" aria-labelledby="name">
+          <aside class="profile-card">
+            <div class="portrait-wrap">
+              <div class="portrait">
+                <div
+                  class="monogram"
+                  id="portrait-monogram"
+                  role="img"
+                  aria-label={`${profile.name} monogram`}
+                  aria-hidden={profile.avatar ? "true" : undefined}
+                >
+                  <span>{profile.initials}</span>
+                  <i class="mono-pixel one" aria-hidden="true"></i>
+                  <i class="mono-pixel two" aria-hidden="true"></i>
+                  <i class="mono-pixel three" aria-hidden="true"></i>
+                </div>
+                {profile.avatar && (
+                  <img
+                    id="portrait-image"
+                    src={asset(profile.avatar)}
+                    alt={`Portrait of ${profile.name}`}
+                    width="156"
+                    height="186"
+                    loading="eager"
+                    decoding="async"
+                    style={`object-position:${profile.avatarPosition}`}
+                  />
+                )}
+              </div>
+              <span class="portrait-grass" aria-hidden="true"></span>
+            </div>
+
+            <h1 id="name">{profile.name}</h1>
+
+            {profile.email && (
+              <div class="email-row">
+                <a id="email-link" class="email" href={`mailto:${profile.email}`}>
+                  <span>{emailParts[0]}@</span><wbr /><span>{emailParts.slice(1).join("@")}</span>
+                </a>
+                <button
+                  class="copy-email"
+                  id="copy-email"
+                  type="button"
+                  data-email={profile.email}
+                  aria-label="Copy email address"
+                  title="Copy email address"
+                  hidden
+                >
+                  <span aria-hidden="true"></span>
+                </button>
+              </div>
+            )}
+
+            {profileLinks.length > 0 && (
+              <div class="profile-links" aria-label="Personal links">
+                {profileLinks.map((item) => (
+                  <a
+                    href={asset(item.href)}
+                    target={isExternal(item.href) ? "_blank" : undefined}
+                    rel={isExternal(item.href) ? "noopener noreferrer" : undefined}
+                  >
+                    {item.label}<span class="arrow" aria-hidden="true">↗</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </aside>
+
+          <div class="intro-column">
+            <div class="education" aria-label="Education">
+              {education.map((item, index) => (
+                <article class="education-item">
+                  <span class="edu-node" aria-hidden="true"></span>
+                  <div class="edu-main">
+                    <div class="edu-topline">
+                      <p class="institution">{item.institution}</p>
+                      <time class="period">{item.period}</time>
+                    </div>
+                    <p class="edu-detail">{item.detail}</p>
+                  </div>
+                  {index < education.length - 1 && <span class="edu-line" aria-hidden="true"></span>}
+                </article>
+              ))}
+            </div>
+
+            <div class="bio-copy">
+              <p class="lead">{profile.lead}</p>
+              <p>{profile.bio}</p>
+              <p>{profile.aim}</p>
+              <p class="site-note">{profile.siteNote}</p>
+            </div>
+          </div>
+        </section>
+
+        {works.length > 0 && (
+          <section class="content-section" id="work" aria-labelledby="work-heading">
+            <header class="section-header">
+              <div class="section-kicker"><span aria-hidden="true"></span>Selected work</div>
+              <h2 id="work-heading">Research &amp; Projects</h2>
+            </header>
+
+            <p class="section-intro">Concrete questions, experiments, and systems I am shaping into research.</p>
+
+            <div class="work-list">
+              {works.map((work, index) => (
+                <article class={`work ${index % 2 ? "work-reverse" : ""}`}>
+                  <div class="work-visual-wrap">
+                    <span class="work-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                    {work.image ? (
+                      <figure class="work-image">
+                        <img
+                          src={asset(work.image)}
+                          alt={work.imageAlt || work.title}
+                          width="560"
+                          height="380"
+                          loading="lazy"
+                          decoding="async"
+                          data-work-image
+                        />
+                      </figure>
+                    ) : (
+                      <div class={`work-visual visual-${work.visual || "memory"}`} aria-hidden="true">
+                        <span class="voxel voxel-a"></span>
+                        <span class="voxel voxel-b"></span>
+                        <span class="voxel voxel-c"></span>
+                        <span class="voxel voxel-d"></span>
+                        <span class="voxel voxel-e"></span>
+                        <span class="visual-line"></span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div class="work-copy">
+                    {work.kicker && <p class="work-kicker">{work.kicker}</p>}
+                    <div class="work-title-row">
+                      <h3>{work.title}</h3>
+                      {work.year && <span class="work-year">{work.year}</span>}
+                    </div>
+                    <p class="work-description">{work.description}</p>
+                    {work.authors && <p class="work-authors">{work.authors}</p>}
+                    {(work.venue || work.status) && (
+                      <p class="work-meta">{[work.venue, work.status].filter(Boolean).join(" · ")}</p>
+                    )}
+                    {work.tags && work.tags.length > 0 && (
+                      <div class="work-tags" aria-label="Keywords">
+                        {work.tags.map((tag) => <span>{tag}</span>)}
+                      </div>
+                    )}
+                    {work.links && work.links.length > 0 && (
+                      <div class="work-links">
+                        {work.links.filter((link) => asset(link.href)).map((link) => (
+                          <a
+                            href={asset(link.href)}
+                            target={isExternal(link.href) ? "_blank" : undefined}
+                            rel={isExternal(link.href) ? "noopener noreferrer" : undefined}
+                          >
+                            {link.label}<span class="arrow" aria-hidden="true">↗</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {notes.length > 0 && (
+          <section class="content-section" id="notes" aria-labelledby="notes-heading">
+            <header class="section-header">
+              <div class="section-kicker"><span aria-hidden="true"></span>Field notes</div>
+              <h2 id="notes-heading">Notes</h2>
+            </header>
+            <div class="notes-list">
+              {notes.map((note) => (
+                <a
+                  class="note"
+                  href={asset(note.href)}
+                  target={isExternal(note.href) ? "_blank" : undefined}
+                  rel={isExternal(note.href) ? "noopener noreferrer" : undefined}
+                >
+                  <time datetime={note.date}>{note.date.slice(0, 7).replace("-", ".")}</time>
+                  <div>
+                    <h3>{note.title}</h3>
+                    {note.category && <p>{note.category}</p>}
+                  </div>
+                  <span class="arrow" aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <div class="landscape-wrap" aria-hidden="true">
+        <div class="landscape">
+          <i class="land-cloud land-cloud-a"></i>
+          <i class="land-cloud land-cloud-b"></i>
+          <div class="tree"><span class="trunk"></span><span class="leaves"></span></div>
+          <div class="flower"></div>
+          {groundPixels.map((pixel) => (
+            <i
+              class="ground-pixel"
+              style={`--x:${pixel.x};--y:${pixel.y};--tone:var(${pixel.tone})`}
+            ></i>
+          ))}
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>© {year} {profile.name}</p>
+        <p class="block-note"><span aria-hidden="true"></span>Built block by block.</p>
+      </footer>
+    </div>
+
+    <p class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></p>
+
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const toggle = document.getElementById("theme-toggle");
+        const label = toggle?.querySelector(".theme-word");
+        const themeColor = document.getElementById("theme-color");
+
+        function setTheme(theme, persist = false) {
+          const dark = theme === "dark";
+          root.dataset.theme = dark ? "dark" : "light";
+          toggle?.setAttribute("aria-pressed", String(dark));
+          toggle?.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+          toggle?.setAttribute("title", dark ? "Switch to light theme" : "Switch to dark theme");
+          if (label) label.textContent = dark ? "Night" : "Day";
+          themeColor?.setAttribute("content", dark ? "#181b18" : "#f4f0e8");
+          if (persist) {
+            try { localStorage.setItem("haotai-theme", root.dataset.theme); } catch (_) {}
+          }
+        }
+
+        if (toggle) {
+          setTheme(root.dataset.theme);
+          toggle.hidden = false;
+          toggle.addEventListener("click", () => {
+            setTheme(root.dataset.theme === "dark" ? "light" : "dark", true);
+          });
+        }
+
+        window.addEventListener("storage", (event) => {
+          if (event.key === "haotai-theme" && event.newValue) setTheme(event.newValue);
+        });
+
+        const toast = document.getElementById("toast");
+        let toastTimer;
+        function announce(message) {
+          if (!toast) return;
+          clearTimeout(toastTimer);
+          toast.textContent = message;
+          toast.classList.add("show");
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+        }
+
+        const copyButton = document.getElementById("copy-email");
+        if (copyButton) {
+          copyButton.hidden = false;
+          copyButton.addEventListener("click", async () => {
+            const email = copyButton.dataset.email;
+            if (!email) return;
+            try {
+              if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+              await navigator.clipboard.writeText(email);
+              announce("Email copied.");
+            } catch (_) {
+              const emailLink = document.getElementById("email-link");
+              if (emailLink) {
+                const range = document.createRange();
+                range.selectNodeContents(emailLink);
+                const selection = window.getSelection();
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+              }
+              announce("Email selected — copy it manually.");
+            }
+          });
+        }
+
+        const portrait = document.getElementById("portrait-image");
+        if (portrait instanceof HTMLImageElement) {
+          const fail = () => {
+            portrait.hidden = true;
+            document.getElementById("portrait-monogram")?.removeAttribute("aria-hidden");
+          };
+          portrait.addEventListener("error", fail, { once: true });
+          if (portrait.complete && !portrait.naturalWidth) fail();
+        }
+
+        document.querySelectorAll("img[data-work-image]").forEach((image) => {
+          const fail = () => {
+            image.closest("figure")?.setAttribute("hidden", "");
+            image.closest("article")?.classList.remove("has-image");
+          };
+          image.addEventListener("error", fail, { once: true });
+          if (image.complete && !image.naturalWidth) fail();
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light;
+    --paper: #f4f0e8;
+    --paper-deep: #ede6da;
+    --panel: #f8f5ef;
+    --ink: #292723;
+    --body: #514c45;
+    --muted: #6b645b;
+    --line: #d4cabb;
+    --line-strong: #beb09d;
+    --green: #4e6a45;
+    --green-hi: #9fb779;
+    --clay: #b86649;
+    --dirt: #a88c6b;
+    --dirt-deep: #846b52;
+    --stone: #98988b;
+    --grass: #728d56;
+    --grass-hi: #a7ba7d;
+    --leaf: #6f8d58;
+    --leaf-deep: #587348;
+    --cloud: rgba(187, 178, 164, .34);
+    --grid: rgba(71, 62, 51, .035);
+    --world-alpha: .27;
+    --serif: "Iowan Old Style", Charter, "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #181b18;
+    --paper-deep: #1f231f;
+    --panel: #1f231f;
+    --ink: #f0ece4;
+    --body: #c3bdb2;
+    --muted: #9d968b;
+    --line: #343a33;
+    --line-strong: #475044;
+    --green: #9ab58a;
+    --green-hi: #b6c99d;
+    --clay: #d08464;
+    --dirt: #765f49;
+    --dirt-deep: #5f4d3c;
+    --stone: #686b61;
+    --grass: #617d52;
+    --grass-hi: #91aa73;
+    --leaf: #658455;
+    --leaf-deep: #4f6844;
+    --cloud: rgba(133, 139, 130, .18);
+    --grid: rgba(235, 229, 218, .026);
+    --world-alpha: .28;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 82% 10%, rgba(184, 102, 73, .06), transparent 26rem),
+      var(--paper);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    z-index: 0;
+  }
+  ::selection { background: var(--green); color: var(--paper); }
+  h1, h2, h3, p, figure { margin: 0; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; text-underline-offset: 5px; }
+  button { font: inherit; color: inherit; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+
+  /* A coherent background scene rather than random decorative stickers. */
+  .world { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; opacity: var(--world-alpha); }
+  .pixel-sun {
+    position: absolute;
+    width: 58px; height: 58px;
+    top: 126px; right: max(22px, calc(50vw - 620px));
+    background: rgba(197, 147, 86, .55);
+    box-shadow: 8px 8px 0 rgba(181, 102, 73, .09), inset 0 0 0 1px rgba(116, 83, 48, .10);
+  }
+  html[data-theme="dark"] .pixel-sun {
+    width: 50px; height: 50px;
+    background: rgba(219, 214, 190, .36);
+    box-shadow: -14px 0 0 var(--paper), 7px 7px 0 rgba(154, 181, 138, .05);
+    border-radius: 0;
+  }
+  .cloud { position: absolute; height: 12px; background: var(--cloud); }
+  .cloud::before,
+  .cloud::after { content: ""; position: absolute; background: var(--cloud); height: 12px; }
+  .cloud::before { width: 36px; left: 12px; top: -12px; }
+  .cloud::after { width: 22px; left: 48px; top: 0; }
+  .cloud-a { width: 66px; top: 195px; left: max(12px, calc(50vw - 650px)); animation: cloudDrift 28s ease-in-out infinite alternate; }
+  .cloud-b { width: 48px; top: 515px; right: max(8px, calc(50vw - 610px)); transform: scale(.72); animation: cloudDrift 36s ease-in-out infinite alternate-reverse; }
+  .cloud-c { width: 42px; top: 72%; left: 4vw; transform: scale(.58); opacity: .7; }
+
+  .star { display: none; position: absolute; width: 4px; height: 4px; background: var(--green-hi); }
+  html[data-theme="dark"] .star { display: block; }
+  .star-a { top: 110px; right: 21vw; }
+  .star-b { top: 190px; right: 11vw; box-shadow: 95px 42px 0 var(--green-hi); }
+  .star-c { top: 420px; left: 9vw; box-shadow: 110px -55px 0 rgba(154,181,138,.55); }
+
+  .floating-block { position: absolute; width: 34px; height: 34px; }
+  .grass-cube {
+    left: max(8px, calc(50vw - 625px)); top: 344px;
+    background: rgba(168, 140, 107, .50);
+    border-top: 9px solid rgba(114, 141, 86, .58);
+    box-shadow: 6px 6px 0 rgba(80, 68, 54, .04);
+  }
+  .grass-cube::before {
+    content: ""; position: absolute; width: 5px; height: 5px; left: 5px; top: 8px; background: rgba(94,122,83,.45);
+    box-shadow: 16px 5px 0 rgba(126,99,70,.26), 6px 15px 0 rgba(126,99,70,.20);
+  }
+  .stone-cube {
+    right: max(10px, calc(50vw - 640px)); top: 59%;
+    background: rgba(152,152,139,.48); transform: scale(.78);
+  }
+  .stone-cube::before {
+    content: ""; position: absolute; width: 5px; height: 5px; left: 7px; top: 7px; background: rgba(81,83,76,.17);
+    box-shadow: 13px 5px 0 rgba(81,83,76,.13), 7px 16px 0 rgba(81,83,76,.10);
+  }
+  .world-ridge {
+    position: absolute; right: -18px; bottom: 148px; width: 28px; height: 28px;
+    background: rgba(152,152,139,.42);
+    box-shadow:
+      -28px 0 0 rgba(152,152,139,.42), -56px 0 0 rgba(152,152,139,.42), -84px 0 0 rgba(152,152,139,.42),
+      -28px -28px 0 rgba(168,140,107,.40), -56px -28px 0 rgba(168,140,107,.40), -84px -28px 0 rgba(168,140,107,.32),
+      -56px -56px 0 rgba(114,141,86,.38), -84px -56px 0 rgba(114,141,86,.28);
+  }
+
+  .shell { width: min(1030px, calc(100% - 80px)); margin: 18px auto 0; position: relative; z-index: 1; }
+  .skip-link {
+    position: fixed; top: -100px; left: 18px; z-index: 20;
+    padding: 9px 14px; background: var(--ink); color: var(--paper);
+  }
+  .skip-link:focus { top: 14px; }
+
+  /* Header */
+  .site-header {
+    min-height: 76px; padding: 10px 0;
+    display: flex; justify-content: space-between; align-items: center; gap: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { min-height: 44px; display: inline-flex; align-items: center; gap: 11px; }
+  .brand-text { font: 24px/1 var(--serif); letter-spacing: -.9px; }
+  .brand-text > span { color: var(--green); }
+  .brand-cube {
+    width: 19px; height: 19px; position: relative; flex: 0 0 19px;
+    background: #a68b68; box-shadow: 3px 3px 0 var(--line);
+  }
+  .brand-cube::before { content: ""; position: absolute; inset: 0 0 auto; height: 6px; background: #78965d; border-top: 2px solid #a9bd82; }
+  .brand-cube i { position: absolute; width: 4px; height: 4px; left: 3px; top: 7px; background: #78965d; box-shadow: 8px -2px #78965d, 9px 7px #846c50, 0 8px #b59a72; }
+  .header-right, nav { display: flex; align-items: center; }
+  .header-right { gap: 22px; min-width: 0; }
+  nav { gap: 22px; flex-wrap: wrap; justify-content: flex-end; }
+  nav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--body); font-size: 13px; }
+  nav a:hover { color: var(--green); text-decoration: underline; }
+  .theme-toggle {
+    height: 42px; min-width: 88px; padding: 0 12px; gap: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line); background: var(--panel); cursor: pointer;
+    box-shadow: 2px 2px 0 var(--line);
+  }
+  .theme-toggle:hover { border-color: var(--green); }
+  .theme-toggle:active { box-shadow: none; transform: translate(1px, 1px); }
+  .theme-word { font: 10px/1 var(--mono); letter-spacing: .7px; text-transform: uppercase; }
+  .theme-pixel { width: 8px; height: 8px; position: relative; background: var(--clay); }
+  .theme-pixel::before {
+    content: ""; position: absolute; width: 2px; height: 2px; top: -4px; left: 3px; background: var(--clay);
+    box-shadow: 0 14px var(--clay), -7px 7px var(--clay), 7px 7px var(--clay);
+  }
+  html[data-theme="dark"] .theme-pixel {
+    width: 12px; height: 12px; background: transparent;
+    box-shadow: -4px 0 0 0 var(--green-hi), -2px 3px 0 0 var(--green-hi);
+  }
+  html[data-theme="dark"] .theme-pixel::before { display: none; }
+
+  /* Hero */
+  .hero {
+    display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 62px;
+    align-items: start; padding: 56px 0 50px;
+    animation: rise 460ms ease-out both;
+  }
+  .profile-card {
+    position: relative; min-width: 0; padding: 0 4px;
+    text-align: center; background: transparent;
+  }
+
+  .portrait-wrap { width: 162px; margin: 0 auto; padding: 3px; background: var(--paper-deep); position: relative; box-shadow: 7px 7px 0 var(--paper-deep); }
+  .portrait { width: 156px; height: 186px; overflow: hidden; position: relative; background: var(--paper-deep); }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .monogram {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--green); font: 44px/1 var(--serif); letter-spacing: -2px;
+    background:
+      linear-gradient(135deg, rgba(94,122,83,.07), transparent 48%),
+      var(--panel);
+  }
+  .monogram::before { content: ""; position: absolute; inset: 12px; border: 1px solid var(--line); }
+  .mono-pixel { position: absolute; width: 5px; height: 5px; background: var(--green); opacity: .42; }
+  .mono-pixel.one { left: 18px; bottom: 18px; box-shadow: 5px 0 0 var(--green), 0 -5px 0 var(--green); }
+  .mono-pixel.two { right: 23px; top: 28px; background: var(--clay); opacity: .25; }
+  .mono-pixel.three { right: 18px; bottom: 28px; opacity: .20; }
+  .portrait-grass {
+    position: absolute; left: 3px; top: 3px; width: 54px; height: 4px; background: var(--green);
+    box-shadow: 8px 4px 0 rgba(94,122,83,.28), 28px 4px 0 rgba(94,122,83,.18);
+  }
+  .profile-card h1 { margin-top: 20px; font: 400 24px/1.3 var(--serif); letter-spacing: -.45px; }
+  .email-row { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 7px; min-width: 0; }
+  .email { color: var(--body); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+  .email:hover { color: var(--green); text-decoration: underline; }
+  .copy-email { width: 30px; height: 38px; padding: 0; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; flex: 0 0 30px; }
+  .copy-email:hover { color: var(--green); }
+  .copy-email > span { width: 10px; height: 11px; border: 1px solid currentColor; position: relative; }
+  .copy-email > span::before { content: ""; position: absolute; width: 8px; height: 9px; left: -4px; top: -4px; border-left: 1px solid currentColor; border-top: 1px solid currentColor; }
+  .profile-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 18px; margin-top: 2px; }
+  .profile-links a, .work-links a { min-height: 38px; display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 13px; }
+  .profile-links a:hover, .work-links a:hover { text-decoration: underline; }
+  .arrow { display: inline-block; transition: transform 150ms ease; font-size: .9em; }
+  a:hover .arrow { transform: translate(2px, -2px); }
+
+  .intro-column { min-width: 0; }
+  .education { position: relative; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .education-item { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 13px; }
+  .education-item + .education-item { margin-top: 17px; }
+  .edu-node { width: 7px; height: 7px; background: var(--green); margin-top: 9px; box-shadow: 3px 3px 0 var(--paper-deep); }
+  .edu-line { position: absolute; left: 3px; top: 21px; bottom: -16px; width: 1px; background: var(--line-strong); }
+  .edu-topline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+  .institution { font-size: 15px; line-height: 1.5; font-weight: 650; color: var(--ink); }
+  .period { color: var(--muted); font: 10.5px/1.7 var(--mono); white-space: nowrap; }
+  .edu-detail { margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+  .education-item + .education-item .institution { color: var(--body); font-weight: 550; }
+
+  .bio-copy { padding-top: 25px; max-width: 66ch; }
+  .bio-copy .lead {
+    font: 24px/1.5 var(--serif); letter-spacing: -.18px; color: var(--ink); text-wrap: pretty;
+  }
+  .bio-copy p { margin-top: 15px; color: var(--body); font-size: 15.5px; line-height: 1.85; text-wrap: pretty; }
+  .bio-copy .site-note { margin-top: 19px; color: var(--muted); font-size: 13px; }
+
+  /* Selected work: editorial research spreads with original voxel illustrations. */
+  .content-section { border-top: 1px solid var(--line); padding: 44px 0 48px; }
+  .section-header { margin-bottom: 9px; }
+  .section-kicker { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font: 10px/1.5 var(--mono); text-transform: uppercase; letter-spacing: .9px; }
+  .section-kicker > span { width: 8px; height: 8px; background: var(--green); box-shadow: 4px -4px 0 rgba(184,102,73,.18); }
+  h2 { margin-top: 7px; font: 400 29px/1.28 var(--serif); letter-spacing: -.45px; }
+  .section-intro { margin: 11px 0 26px; max-width: 58ch; color: var(--muted); font-size: 13px; line-height: 1.75; }
+  .work-list { border-top: 1px solid var(--line); }
+  .work {
+    display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 46px;
+    align-items: center; min-width: 0; padding: 35px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .work-reverse { grid-template-columns: minmax(0, 1fr) 245px; }
+  .work-reverse .work-visual-wrap { grid-column: 2; grid-row: 1; }
+  .work-reverse .work-copy { grid-column: 1; grid-row: 1; }
+  .work-visual-wrap { position: relative; min-width: 0; padding-left: 24px; }
+  .work-index { position: absolute; left: 0; top: 0; color: var(--muted); font: 9.5px/1.5 var(--mono); writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: .8px; }
+  .work-image, .work-visual {
+    position: relative; overflow: hidden; min-height: 164px;
+    border: 1px solid var(--line-strong); background: var(--panel);
+    box-shadow: 6px 6px 0 var(--paper-deep);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .work:hover .work-image, .work:hover .work-visual { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--paper-deep); border-color: rgba(78,106,69,.55); }
+  .work-image { padding: 6px; }
+  .work-image img { width: 100%; aspect-ratio: 7 / 5; object-fit: contain; }
+  .work-visual { height: 164px; background: linear-gradient(180deg, rgba(78,106,69,.035), transparent 52%), var(--panel); }
+  .work-visual::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(to right, rgba(78,106,69,.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(78,106,69,.045) 1px, transparent 1px); background-size: 16px 16px; opacity: .65; }
+  .voxel, .visual-line { position: absolute; display: block; }
+  .voxel { width: 30px; height: 30px; border: 1px solid rgba(55,62,50,.08); box-shadow: 4px 4px 0 rgba(54,50,44,.04); }
+  .visual-memory .voxel-a { left: 42px; top: 82px; background: var(--dirt); border-top: 8px solid var(--grass); }
+  .visual-memory .voxel-b { left: 76px; top: 55px; background: var(--dirt); border-top: 8px solid var(--grass-hi); }
+  .visual-memory .voxel-c { left: 110px; top: 82px; background: var(--stone); }
+  .visual-memory .voxel-d { left: 144px; top: 42px; background: var(--leaf); }
+  .visual-memory .voxel-e { left: 155px; top: 18px; width: 8px; height: 24px; background: var(--dirt-deep); box-shadow: none; border: 0; }
+  .visual-memory .visual-line { left: 56px; top: 104px; width: 101px; height: 3px; background: rgba(78,106,69,.28); }
+  .visual-progress .voxel { bottom: 31px; background: var(--green); box-shadow: none; }
+  .visual-progress .voxel-a { left: 34px; height: 30px; }
+  .visual-progress .voxel-b { left: 70px; height: 50px; }
+  .visual-progress .voxel-c { left: 106px; height: 76px; background: var(--grass-hi); }
+  .visual-progress .voxel-d { left: 142px; height: 60px; background: var(--clay); }
+  .visual-progress .voxel-e { left: 178px; height: 92px; background: var(--green); }
+  .visual-progress .visual-line { left: 26px; right: 24px; bottom: 28px; height: 2px; background: var(--line-strong); }
+  .visual-systems .voxel-a { left: 28px; top: 67px; width: 42px; height: 42px; background: var(--stone); }
+  .visual-systems .voxel-b { left: 98px; top: 34px; width: 42px; height: 42px; background: var(--green); }
+  .visual-systems .voxel-c { left: 170px; top: 67px; width: 42px; height: 42px; background: var(--dirt); border-top: 8px solid var(--grass-hi); }
+  .visual-systems .voxel-d { left: 75px; top: 84px; width: 12px; height: 12px; background: var(--clay); box-shadow: 84px 0 0 var(--clay); }
+  .visual-systems .voxel-e { display: none; }
+  .visual-systems .visual-line { left: 67px; top: 88px; width: 105px; height: 2px; background: var(--green); box-shadow: 52px -34px 0 -0.5px var(--green); transform: rotate(-18deg); transform-origin: left center; opacity: .65; }
+  .work-copy { min-width: 0; max-width: 650px; }
+  .work-kicker { margin-bottom: 7px; color: var(--green); font: 9.5px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .7px; }
+  .work-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; }
+  .work-title-row h3 { font: 400 24px/1.34 var(--serif); letter-spacing: -.25px; }
+  .work-year { color: var(--muted); font: 10.5px/1.6 var(--mono); white-space: nowrap; }
+  .work-description { margin-top: 11px; color: var(--body); font-size: 15px; line-height: 1.82; max-width: 61ch; }
+  .work-authors { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  .work-meta { margin-top: 9px; color: var(--muted); font: 10.5px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .45px; }
+  .work-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+  .work-tags span { padding: 3px 7px; border: 1px solid var(--line); background: rgba(248,245,239,.34); color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+  html[data-theme="dark"] .work-tags span { background: rgba(255,255,255,.018); }
+  .work-links { display: flex; flex-wrap: wrap; gap: 0 20px; margin-top: 10px; }
+
+  .note { display: grid; grid-template-columns: 70px minmax(0, 1fr) 14px; gap: 22px; align-items: baseline; padding: 20px 0; }
+  .note + .note { border-top: 1px solid var(--line); }
+  .note time { color: var(--muted); font: 10.5px/1.7 var(--mono); }
+  .note h3 { font-size: 17px; line-height: 1.6; font-weight: 550; }
+  .note p { color: var(--muted); font-size: 12px; }
+
+  /* Footer landscape: the most explicit voxel moment, away from the reading flow. */
+  .landscape-wrap { height: 106px; position: relative; border-bottom: 1px solid var(--line); overflow: hidden; }
+  .landscape-wrap::before { content: ""; position: absolute; left: 0; bottom: -1px; width: 42px; height: 2px; background: var(--green); }
+  .landscape { --px: 5px; width: 240px; height: 104px; position: absolute; right: 4px; bottom: 2px; }
+  .ground-pixel { position: absolute; width: var(--px); height: var(--px); left: calc(var(--x) * var(--px)); top: calc(19px + var(--y) * var(--px)); background: var(--tone); }
+  .tree { position: absolute; z-index: 2; left: 104px; top: 4px; width: 44px; height: 48px; }
+  .trunk { position: absolute; left: 19px; bottom: -1px; width: 6px; height: 26px; background: var(--dirt-deep); }
+  .leaves { position: absolute; left: 4px; top: 4px; width: 36px; height: 27px; background: var(--leaf); box-shadow: -5px 6px 0 var(--leaf-deep), 5px 6px 0 var(--leaf-deep), 0 -5px 0 var(--leaf); }
+  .leaves::after { content: ""; position: absolute; left: 5px; top: 4px; width: 5px; height: 5px; background: var(--grass-hi); box-shadow: 18px 11px var(--leaf-deep), 7px 17px var(--leaf-deep); }
+  .flower { position: absolute; z-index: 2; left: 184px; top: 56px; width: 3px; height: 10px; background: var(--leaf-deep); }
+  .flower::before { content: ""; position: absolute; width: 5px; height: 5px; left: -1px; top: -4px; background: var(--clay); box-shadow: -3px 0 rgba(184,102,73,.70), 3px 0 rgba(184,102,73,.70), 0 -3px rgba(184,102,73,.70); }
+  .land-cloud { position: absolute; height: 5px; background: var(--cloud); }
+  .land-cloud::before { content: ""; position: absolute; top: -5px; left: 5px; width: 15px; height: 5px; background: var(--cloud); }
+  .land-cloud-a { width: 30px; top: 21px; left: 16px; }
+  .land-cloud-b { width: 23px; top: 8px; right: 5px; }
+
+  .footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 0 30px; color: var(--muted); font-size: 11px; }
+  .block-note { display: inline-flex; align-items: center; gap: 9px; font: 10px/1.6 var(--mono); }
+  .block-note > span { width: 5px; height: 5px; background: var(--green); box-shadow: 3px -3px 0 rgba(184,102,73,.26); }
+
+  .toast {
+    opacity: 0; pointer-events: none; position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 5px); z-index: 30;
+    max-width: calc(100% - 32px); padding: 9px 14px; background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); box-shadow: 3px 3px 0 var(--paper-deep); font-size: 12px; transition: opacity 160ms ease, transform 160ms ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes cloudDrift { from { translate: 0 0; } to { translate: 18px 0; } }
+
+  @media (max-width: 1100px) {
+    .shell { width: calc(100% - 64px); }
+    .hero { grid-template-columns: 212px minmax(0, 1fr); gap: 48px; }
+    .pixel-sun { right: 18px; }
+    .cloud-a { left: 8px; }
+    .grass-cube { left: 6px; }
+    .stone-cube { right: 4px; }
+  }
+
+  @media (max-width: 820px) {
+    .hero { grid-template-columns: 206px minmax(0, 1fr); gap: 34px; }
+    .edu-topline { display: block; }
+    .period { display: block; margin-top: 2px; }
+    .bio-copy .lead { font-size: 21px; }
+    .work, .work-reverse { grid-template-columns: 220px minmax(0, 1fr); gap: 30px; }
+    .work-reverse .work-visual-wrap { grid-column: 1; }
+    .work-reverse .work-copy { grid-column: 2; }
+  }
+
+  @media (max-width: 660px) {
+    .shell { width: calc(100% - 40px); margin-top: 5px; }
+    .site-header { min-height: 70px; padding: 9px 0; }
+    .brand-text { font-size: 22px; }
+    .brand-cube { width: 17px; height: 17px; flex-basis: 17px; }
+    .header-right { gap: 12px; }
+    nav { gap: 14px; }
+    nav a { font-size: 12px; }
+    .theme-toggle { width: 44px; min-width: 44px; padding: 0; }
+    .theme-word { display: none; }
+
+    .hero { display: block; padding: 32px 0 27px; }
+    .profile-card { width: min(100%, 274px); margin: 0 auto 31px; padding: 0 8px; box-shadow: none; }
+    .portrait-wrap { width: 134px; box-shadow: 5px 5px 0 var(--paper-deep); }
+    .portrait { width: 128px; height: 152px; }
+    .monogram { font-size: 38px; }
+    .profile-card h1 { font-size: 22px; margin-top: 15px; }
+    .email { font-size: 12.5px; }
+
+    .education { padding-bottom: 21px; }
+    .institution { font-size: 14px; }
+    .edu-detail { font-size: 12.5px; }
+    .bio-copy { padding-top: 21px; }
+    .bio-copy .lead { font-size: 20px; line-height: 1.55; }
+    .bio-copy p { font-size: 15px; line-height: 1.85; margin-top: 13px; }
+    .bio-copy .site-note { font-size: 12.5px; margin-top: 17px; }
+
+    .content-section { padding: 29px 0 33px; }
+    h2 { font-size: 23px; }
+    .section-intro { margin-bottom: 18px; }
+    .work, .work-reverse { grid-template-columns: 1fr; gap: 18px; padding: 26px 0 29px; }
+    .work-reverse .work-visual-wrap, .work-reverse .work-copy { grid-column: 1; grid-row: auto; }
+    .work-visual-wrap { padding-left: 19px; max-width: 380px; }
+    .work-index { left: 0; top: 1px; }
+    .work-image, .work-visual { min-height: 150px; }
+    .work-visual { height: 150px; }
+    .work-title-row { gap: 12px; }
+    .work-title-row h3 { font-size: 21px; }
+    .work-description { font-size: 14.5px; }
+    .work-tags { margin-top: 12px; }
+    .note { grid-template-columns: 55px minmax(0, 1fr) 12px; gap: 12px; }
+    .note h3 { font-size: 16px; }
+
+    .world { opacity: calc(var(--world-alpha) * .72); }
+    .pixel-sun { width: 42px; height: 42px; top: 98px; right: -7px; }
+    .cloud-a { top: 138px; left: -24px; transform: scale(.62); }
+    .cloud-b { top: 530px; right: -21px; transform: scale(.52); }
+    .cloud-c, .stone-cube, .world-ridge { display: none; }
+    .grass-cube { top: 300px; left: -13px; transform: scale(.62); }
+    .landscape-wrap { height: 100px; }
+    .landscape { right: -4px; transform: scale(.92); transform-origin: right bottom; }
+    .footer { font-size: 10px; padding: 18px 0 24px; }
+    .block-note { font-size: 9px; }
+  }
+
+  @media (max-width: 390px) {
+    .shell { width: calc(100% - 32px); }
+    nav { gap: 10px; }
+    .profile-card { width: min(100%, 258px); }
+    .edu-topline { display: block; }
+    .footer { flex-wrap: wrap; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  @media print {
+    :root, html[data-theme="dark"] {
+      --paper: #fff; --paper-deep: #fff; --panel: #fff; --ink: #111; --body: #333; --muted: #555; --line: #ccc; --line-strong: #bbb; --green: #36543c;
+    }
+    .world, .site-header, .landscape-wrap, .copy-email, .toast { display: none; }
+    .shell { width: 100%; margin: 0; }
+    .hero { padding-top: 0; }
+    .profile-card { box-shadow: none; }
+    .work, .education-item { break-inside: avoid; }
+  }
+</style>
